@@ -1,0 +1,66 @@
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:controls="using:Template10.Controls"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:vm="using:WhereAmI.ViewModels"
+      mc:Ignorable="d"
+      x:Class="WhereAmI.Views.MapPage">
+
+    <Page.DataContext>
+        <vm:MapPageViewModel x:Name="ViewModel"/>
+    </Page.DataContext>
+
+    <RelativePanel x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+        <controls:PageHeader x:Name="PageHeader"
+                             Content="Map"
+                             RelativePanel.AlignLeftWithPanel="True"
+                             RelativePanel.AlignRightWithPanel="True"
+                             RelativePanel.AlignTopWithPanel="True" 
+                             EllipsisVisibility="Collapsed">
+        </controls:PageHeader>
+        
+        <!--선택된 도시 정보-->
+        <Grid x:Name="Information" 
+              Margin="10"
+              RelativePanel.Below="PageHeader">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="{Binding SelectedCity.CityName}" 
+                       Style="{StaticResource TitleTextBlockStyle}"/>
+
+            <StackPanel Orientation="Horizontal"
+                        Grid.Row="1">
+                <TextBlock Text="{Binding SelectedCity.Lat}" 
+                           Style="{StaticResource CaptionTextBlockStyle}"/>
+                <TextBlock Text="x" Margin="10,0" 
+                           Style="{StaticResource CaptionTextBlockStyle}"/>
+                <TextBlock Text="{Binding SelectedCity.Lng}" 
+                           Style="{StaticResource CaptionTextBlockStyle}"/>
+            </StackPanel>
+
+            <TextBlock Text="{Binding SelectedCity.Population}" 
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Grid.Row="2"/>
+        </Grid>
+
+        <!--지도-->
+        <WebView x:Name="WebView"
+                 RelativePanel.Below="Information" 
+                 RelativePanel.AlignLeftWithPanel="True" 
+                 RelativePanel.AlignRightWithPanel="True" 
+                 RelativePanel.AlignBottomWithPanel="True" 
+                 Source="{Binding Uri}" />
+
+    </RelativePanel>
+</Page>
+
