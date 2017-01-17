@@ -1,11 +1,12 @@
 using Blend.SampleData.SampleDataSource;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Template10.Mvvm;
 using WhereAmI.Models;
-using WhereAmI.Services;
 using Windows.ApplicationModel;
 using Windows.UI.Xaml.Controls;
 
@@ -64,7 +65,7 @@ namespace WhereAmI.ViewModels
             if (DesignMode.DesignModeEnabled)
             {
                 //디자인 타임 데이터
-                InputCity = "지명 입력";
+                InputCity = "도시명을 입력해주세요.";
 
                 ResultList = new ObservableCollection<City>()
                 {
@@ -97,22 +98,9 @@ namespace WhereAmI.ViewModels
             //검색 커맨드 생성
             FindCommand = new DelegateCommand(async () =>
             {
-                ResultList.Clear();
+                //TODO : 지도서비스 검색어 보내서 결과 가져오기
+                await AddDummyCityAsync();
 
-                //지도서비스 검색어 보내서 결과 가져오기
-                var result = await GeoNamesServiceHelper.Instance.GetGeonames(InputCity);
-                if (result.geonames == null) return;
-
-                foreach (var geoname in result.geonames)
-                {
-                    ResultList.Add(new City
-                    {
-                        CityName = geoname.name,
-                        Lat = geoname.lat,
-                        Lng = geoname.lng,
-                        Population = geoname.population
-                    });
-                }
             }, () => !string.IsNullOrEmpty(InputCity));
 
             //지도 열기 커맨드 생성
@@ -137,6 +125,29 @@ namespace WhereAmI.ViewModels
                         break;
                 }
             };
+        }
+
+        /// <summary>
+        /// 더미 검색결과 생성
+        /// </summary>
+        /// <returns></returns>
+        private async Task AddDummyCityAsync()
+        {
+            ResultList.Clear();
+
+            //더미 시티 생성
+            for (int i = 0; i < 10; i++)
+            {
+                ResultList.Add(new City
+                {
+                    CityName = "City Name " + i,
+                    Lat = i + "111.111",
+                    Lng = i + "222.222",
+                    Population = 183653729 * (i + 1)
+                });
+
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            }
         }
 
         #endregion

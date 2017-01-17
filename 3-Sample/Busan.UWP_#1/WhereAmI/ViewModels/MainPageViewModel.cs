@@ -1,23 +1,21 @@
 using Blend.SampleData.SampleDataSource;
-using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using System.Threading.Tasks;
 using Template10.Mvvm;
 using WhereAmI.Models;
-using WhereAmI.Services;
 using Windows.ApplicationModel;
-using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Navigation;
 
 namespace WhereAmI.ViewModels
 {
     public class MainPageViewModel : ViewModelBase
     {
+        // sample https://github.com/Windows-XAML/Template10/blob/master/Templates%20(Project)/Minimal/ViewModels/MainPageViewModel.cs
+
         #region Property
 
-        /// <summary>
-        /// 선택한 나라
-        /// </summary>
         private ResultListItem _selectedCountry;
         public ResultListItem SelectedCountry
         {
@@ -25,9 +23,6 @@ namespace WhereAmI.ViewModels
             set { Set(ref _selectedCountry, value); }
         }
 
-        /// <summary>
-        /// 입력한 도시명
-        /// </summary>
         private string _inputCity;
         public string InputCity
         {
@@ -35,36 +30,36 @@ namespace WhereAmI.ViewModels
             set { Set(ref _inputCity, value); }
         }
 
-        /// <summary>
-        /// 검색 결과 도시 목록
-        /// </summary>
-        private IList<City> _resultList;
-        public IList<City> ResultList
+        private ObservableCollection<City> _resultList;
+        public ObservableCollection<City> ResultList
         {
             get { return _resultList; }
             set { Set(ref _resultList, value); }
+        }
+
+        private City _selectedCity;
+        public City SelectedCity
+        {
+            get { return _selectedCity; }
+            set { Set(ref _selectedCity, value); }
         }
 
         #endregion
 
         #region Command
 
-        public DelegateCommand FindCommand { get; set; } //RaiseCanExecuteChanged 사용
-        public ICommand OpenMapCommand { get; set; }
+        public DelegateCommand FindCommand { get; set; }
+        public DelegateCommand OpenMapCommand { get; set; }
         
         #endregion
 
         #region Constructor
 
-        /// <summary>
-        /// 기본 생성자
-        /// </summary>
         public MainPageViewModel()
         {
             if (DesignMode.DesignModeEnabled)
             {
-                //디자인 타임 데이터
-                InputCity = "지명 입력";
+                InputCity = "도시명을 입력해주세요.";
 
                 ResultList = new ObservableCollection<City>()
                 {
@@ -78,7 +73,6 @@ namespace WhereAmI.ViewModels
             }
             else
             {
-                //런타임 
                 ResultList = new ObservableCollection<City>();
 
                 Initialize();
@@ -89,54 +83,58 @@ namespace WhereAmI.ViewModels
 
         #region Method
 
-        /// <summary>
-        /// 초기화
-        /// </summary>
         private void Initialize()
         {
-            //검색 커맨드 생성
-            FindCommand = new DelegateCommand(async () =>
+            FindCommand = new DelegateCommand(() =>
             {
-                ResultList.Clear();
+                AddDummyCityAsync();
 
-                //지도서비스 검색어 보내서 결과 가져오기
-                var result = await GeoNamesServiceHelper.Instance.GetGeonames(InputCity);
-                if (result.geonames == null) return;
-
-                foreach (var geoname in result.geonames)
-                {
-                    ResultList.Add(new City
-                    {
-                        CityName = geoname.name,
-                        Lat = geoname.lat,
-                        Lng = geoname.lng,
-                        Population = geoname.population
-                    });
-                }
             }, () => !string.IsNullOrEmpty(InputCity));
 
-            //지도 열기 커맨드 생성
-            OpenMapCommand = new DelegateCommand<object>(obj =>
+            OpenMapCommand = new DelegateCommand(() =>
             {
-                var args = obj as ItemClickEventArgs;
-                var item = args?.ClickedItem as City;
-                if (item == null) return;
+                var item = SelectedCity;
 
-                var serializeItem = JsonConvert.SerializeObject(item);
-                NavigationService.Navigate(typeof(Views.MapPage), serializeItem);
-            });
+                NavigationService.Navigate(typeof(Views.MapPage), item);
 
-            //프로퍼티 체인지 이벤트 핸들러
+            }, () => SelectedCity != null);
+
             PropertyChanged += (s, e) =>
             {
                 switch (e.PropertyName)
                 {
                     case "InputCity":
-                        //프로퍼티가 변경되면, 커맨드 사용 가능 여부를 확인
                         FindCommand.RaiseCanExecuteChanged();
                         break;
                 }
             };
+        }
+
+        private async void AddDummyCityAsync()
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                ResultList.Add(new City
+                {
+                    CityName = "City Name " + i,
+                    Lat = i + "111.111",
+                    Lng = i + "222.222",
+                    Population = 183653729 * (i + 1)
+                });
+
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            }
+        }
+
+        #endregion
+
+        #region Public Method
+
+        public override async Task OnNavigatedToAsync(object parameter, NavigationMode mode, IDictionary<string, object> suspensionState)
+        {
+            SelectedCity = null;
+
+            await Task.CompletedTask;
         }
 
         #endregion
